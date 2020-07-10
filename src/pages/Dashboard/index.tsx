@@ -51,15 +51,27 @@ const Dashboard: React.FC = () => {
   >();
   const [searchValue, setSearchValue] = useState('');
 
-  const navigation = useNavigation();
+  const { navigate } = useNavigation();
 
   async function handleNavigate(id: number): Promise<void> {
+    navigate('FoodDetails', { id });
     // Navigate do ProductDetails page
   }
 
   useEffect(() => {
     async function loadFoods(): Promise<void> {
-      // Load Foods from API
+      const { data } = await api.get<Food[]>('foods', {
+        params: {
+          category_like: selectedCategory,
+          name_like: searchValue,
+        },
+      });
+
+      data.forEach(item => {
+        item.formattedPrice = formatValue(item.price);
+      });
+
+      setFoods(data);
     }
 
     loadFoods();
@@ -67,13 +79,21 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     async function loadCategories(): Promise<void> {
-      // Load categories from API
+      const response = await api.get('categories');
+
+      setCategories(response.data);
     }
 
     loadCategories();
   }, []);
 
   function handleSelectCategory(id: number): void {
+    if (!selectedCategory || selectedCategory !== id) {
+      setSelectedCategory(id);
+    } else {
+      setSelectedCategory(undefined);
+    }
+
     // Select / deselect category
   }
 
@@ -85,7 +105,7 @@ const Dashboard: React.FC = () => {
           name="log-out"
           size={24}
           color="#FFB84D"
-          onPress={() => navigation.navigate('Home')}
+          onPress={() => navigate('Home')}
         />
       </Header>
       <FilterContainer>
